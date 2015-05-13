@@ -679,3 +679,42 @@ InnoDB 提供的 transaction
 
 
 -
+
+# Multibyte Strings(p103)
+### 何謂 Multibyte Strings？
+* 除了英文之外，其他語言多半無法僅用 1 byte 來表示，而需要 Multibyte。
+* 而 PHP 內建的字串函數，操作包含  Multibyte string 的 Unicode 編碼的字串，將會產生未預期的結果...
+
+認識 Unicode：[Unicode Consortium](http://www.unicode.org/)
+
+### 如何避免 Multibyte 錯誤
+* 安裝 `mbstring` PHP extension。
+* 即可使用 `mb_strlen()` 這類函數，取代內建的 `strlen()` 函數。
+* 處理 Unicode 編碼的字串，請務必使用 `mbstring` 提供的函數，因為內建的字串函數並不會考慮到 Multibyte 問題。
+
+### Character Encoding
+* 目前主流編碼使用 UTF-8。
+* 使用 UTF-8 編碼就對了，所有現代的瀏覽器都認識此編碼。
+* 字元編碼：一種依照某種格式打包 Unicode 資料的方法。並儲存在記憶體或在 server 與 client 之間傳送。
+
+>小複習：UTF-8是一種可變長度Unicode編碼。使用一至四個bytes作為文字的編碼：一個中文字 3bytes 英文字1bytes
+>(Unicode不論中英文都是2bytes，UTF-8算是由此改良而來)
+
+### 認識 Unicode 與 UTF-8
+* [the best explanation of Unicode and UTF-8that I’ve seen](https://www.youtube.com/watch?v=MijmeoH9LT4) by Tom Scott
+* [writes a nice explanation of characterencodings on his website](http://www.joelonsoftware.com/articles/Unicode.html) by Joel Spolsky
+
+### 處理 Multibyte String 的準則
+1. 始終清楚知道資料的編碼。2. 使用 UTF-8 編碼來儲存資料。
+3. 輸出資料也是用 UTF-8 編碼。
+
+使用 `mb_detect_encoding()` 來偵測編碼
+
+使用 `mb_convert_encoding()` 來轉換編碼
+
+### Output UTF-8 Data
+* 設定 HTML 文件編碼：
+	* `<meta charset="UTF-8"/>`
+* 設定 PHP 預設輸出 UTF-8 編碼的資料：
+	* 在 `php.ini` 設定 `default_charset = "UTF-8";`
+	* 將影響 `htmlentities()`,`html_entity_decode()`, `htmlspecialchars()` 和 `mbstring` 等函數預設編碼。
