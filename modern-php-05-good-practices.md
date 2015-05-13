@@ -558,6 +558,16 @@ foreach ($period as $nextDateTime) {
 經常處理時間問題，可使用 nesbot/carbon 套件。
 [第三方套件 Cabon](https://github.com/briannesbitt/Carbon)提供許多好用的方法處理 date time。
 
+-
+
+### 本章下半場探討這4大主題的良好實踐方式：
+* Databases
+* Multibyte Strings
+* Streams
+* Errors and Exceptions
+
+>(2015/5/14 @Laradiner)
+
 # Databases 
 * PHP 支援多種 DB 連線與連線的介面
 * MySQL：mysqli extension，讓 PHP 支援 mysqli_*() 方法
