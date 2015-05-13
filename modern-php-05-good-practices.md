@@ -3,11 +3,12 @@
 * 把 Timezone 全部修改為 Asia/Taipei 來練習會比較有感覺。
 * 補充：在 Sublime Text 環境下 build PHP
 
-### 本章探討這4大主題的良好實踐方式：
+### 本章上半場探討這3大主題的良好實踐方式：
 * Sanitize, Validate, and Escape
 * Passwords
 * Dates, Times, and Time Zones
-* Databases
+
+>(2015/5/7 @Laradiner)
 
 
 # Sanitize,Validate, and Escape （過濾、驗證、跳脫）
