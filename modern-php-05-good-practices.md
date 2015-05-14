@@ -913,3 +913,225 @@ Example 5-37. Use DirtyWordsFilter stream filter<?php$handle = fopen('data.txt
 * [Streams documentation](http://php.net/manual/en/book.stream.php)
 
 
+# Errors and Exceptions
+Errors and exceptions 的差別？
+error 表示嚴重錯誤，比如記憶體溢位。
+exception 代表設計或實現問題。
+
+都帶有錯誤訊息，錯誤類型，這兩者出現時都代表你的程式有錯誤發生。
+
+
+
+Errors, however, are older than exceptions.
+錯誤早於異常。
+
+我們應該要依賴 exceptions 而避免 errors。
+
+Exceptions 是 PHP 錯誤處理機制魚物件導向下的產物。  are an object-oriented evolution of PHP’s error handling system.
+丟、接異常更有彈性，也是防禦性機制。
+
+* 避免使用 `@` 來抑制錯誤產生。
+* 使用第三方套件時，請使用 `try {} catch {}` 區塊包住，以捕捉不可預期的異常。
+* 
+
+### Exceptions
+* 一個 exception 是 Exception 類別的實體化
+* 帶有 2 個主要的屬性：message(訊息) 和 numeric code(代碼)。
+* 丟出錯誤的時機：當無法 recover (例如,遠端 API 未回應，資料庫查詢錯誤，或是 precondition is not satisfied)
+
+舉例：實體化一個 exception
+
+```php
+<?php
+$exception = new Exception('Danger, Will Robinson!', 100);
+```
+
+使用 `getCode()`、`getMessage()` 方法取得錯誤訊息和代碼：
+
+```php
+<?php$code = $exception->getCode(); // 100$message = $exception->getMessage(); // 'Danger...'
+```
+
+### Throw exceptions
+使用 `throw` 關鍵字來拋出一個異常：
+```php<?phpthrow new Exception('Something went wrong. Time for lunch!');
+```
+
+PHP 內建的 Exception subclasses：
+
+[Exception](http://php.net/manual/en/class.exception.php)
+
+[ErrorException](http://php.net/manual/en/class.errorexception.php)
+
+[Standard PHP Library (SPL)](http://php.net/manual/en/book.spl.php) 也提供許多處理異常的子類別。
+
+每個 Exception subclasses 負責處理不同的異常狀況。
+
+例如：某個方法至少要傳入 5 字元，但是只傳入 2 字元，此時會拋出 `InvalidArgumentException` 異常。
+
+### Catch exceptions
+
+使用 `try/catch` 區塊來捕捉異常。
+
+例如：Catch thrown exception
+```php
+<?phptry {	$pdo = new PDO('mysql://host=wrong_host;dbname=wrong_name');} catch (PDOException $e) {	// Inspect the exception for logging	$code = $e->getCode();	$message = $e->getMessage();
+	// Display a nice message to the user	echo 'Something went wrong. Check back soon, please.';	exit;}
+```
+
+
+例如：Catch multiple thrown exceptions
+
+```php
+<?phptry {	throw new Exception('Not a PDO exception');	$pdo = new PDO('mysql://host=wrong_host;dbname=wrong_name');} catch (PDOException $e) {	// 只負責捕捉 PDO exception	echo "Caught PDO exception";} catch (Exception $e) {	// 負責捕捉其他 exceptions	echo "Caught generic exception";} finally {	// 所有 catch 進行完一定會被執行的部份。
+	// 於 PHP 5.5 新增	echo "Always do this";}
+```
+### Exception Handlers
+我怎麼知道有哪些可能的異常需要捕捉？沒捕捉到的異常怎麼辦？
+
+設定全域 exception handler 來捕捉那些沒有被捕捉到的異常，
+這是異常捕捉的最後一道防線。
+
+使用 `set_exception_handler()` 函數來註冊 exception handler：
+
+```php
+<?phpset_exception_handler(function (Exception $e) {	// Handle and log exception
+	// 強烈建議把異常給記錄下來!});
+```
+
+而 PHP 建議我們在自訂之後，使用 `restore_exception_handler()` 來恢復先前的 exception handler 設定，避免影響其他 handler。
+
+Example 5-40. Set global exception handler
+
+```php
+<?phpset_exception_handler(function (Exception $e) {	// Handle and log exception});// Your code goes here...// Restore previous exception handlerrestore_exception_handler();
+```
+
+```php
+set_exception_handler('exception_handler_1');
+set_exception_handler('exception_handler_2');
+
+restore_exception_handler();
+
+// restore 後此時會呼叫 handler_1
+throw new Exception('This triggers the first exception handler...');
+
+```
+### Errors
+除了異常處理函數之外，PHP 還提供錯誤處理函數：
+
+* `trigger_error()` 手動觸發錯誤產生。
+* `error_reporting()` 設定錯誤報告級別。
+
+不同類型的錯誤：
+
+* fatal errors, 
+* runtime errors, 
+* compile-time errors, 
+* startup errors, 
+* and (more rarely) usertriggered errors. 
+
+最常遇到的是語法錯誤。
+PHP script 無法如期被執行，通常就會產生錯誤，(例如：語法錯誤)
+
+異常提供比錯誤更多的相關訊息，
+
+建議使用 Monolog 來儲存紀錄。
+
+使用 `error_reporting()` 函數並傳入 `E_*` 常數，來設定錯誤報告級別，或是直接在 `php.ini` 設定。
+
+
+更多關於 [error_reporting()](http://php.net/manual/en/function.error-reporting.php)
+
+錯誤紀錄的四大準則：
+
+* 永遠開啟錯誤收集機制。* 開發環境下顯示錯誤訊息。* 正式環境下關閉錯誤訊息。* 不論開發/正式環境一律用日誌紀錄錯誤。
+
+開發環境下建議的配置(php.ini)
+
+```php
+; Display errors
+  display_startup_errors = On
+  display_errors = On
+; Report all errors
+  error_reporting = -1
+; Turn on error logging
+  log_errors = On
+```
+
+正式環境下建議的配置(php.ini)
+
+```php
+; DO NOT display errorsdisplay_startup_errors = Offdisplay_errors = Off; Report all errors EXCEPT noticeserror_reporting = E_ALL & ~E_NOTICE; Turn on error logginglog_errors = On
+```
+
+### Error Handlers
+使用 `set_error_handler()` 函數自訂全域的 error handler。
+
+```php
+<?phpset_error_handler(function ($errno, $errstr, $errfile, $errline) {// Handle error});
+```
+
+接受傳入 5 個參數：
+
+1. `$errno` 錯誤層級 (對應到 PHP E_* constant)。1. `$errstr` 錯誤訊息。1. `$errfile` 日誌檔名。
+1. `$errline` 錯誤行號。1. `$errcontext` 選填，通常忽略。
+
+
+作者推薦將 errors 轉換為 Error Exception 物件。
+ErrorException 類別(PHP5.1提供)是 Exception 的子類別。
+
+但並不是所有的 error 都可以被轉換成 Exception，例如：
+`E_ERROR`, `E_PARSE`, `E_CORE_ERROR`, `E_CORE_WARNING`, `E_COMPILE_ERROR`, `E_COMPILE_WARNING`,`E_STRICT`。
+
+將 error 轉換成 ErrorException 物件：
+
+```php
+<?phpset_error_handler(function ($errno, $errstr, $errfile, $errline) {if (!(error_reporting() & $errno)) {// Error is not specified in the error_reporting// setting, so we ignore it.return;}throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);});
+```
+
+PHP 建議我們在自訂之後，使用 `restore_error_handler()` 來恢復先前的 error handler 設定，避免影響其他 handler。
+
+Example 5-41. Set global error handler
+```php<?php// Register error handlerset_error_handler(function ($errno, $errstr, $errfile, $errline) {if (!(error_reporting() & $errno)) {// Error is not specified in the error_reporting// setting, so we ignore it.return;}throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
+});// Your code goes here...// Restore previous error handlerrestore_error_handler();
+```
+
+### Errors and Exceptions During Development
+* 我們知道在開發環境下要顯示錯誤訊息。
+* 由於 PHP 預設的錯誤顯示不好看，推薦使用 [whoops](http://filp.github.io/whoops/) 套件 (Laravel4 使用)使用 compser 來安裝也很簡單：
+
+```
+{"require": {"filp/whoops": "~1.0"}}
+```
+
+註冊 Whoops handler 即可使用：
+
+```php
+<?php// Use composer autoloaderrequire 'path/to/vendor/autoload.php';
+
+// Setup Whoops error and exception handlers$whoops = new \Whoops\Run;$whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler);$whoops->register();
+```
+
+### Production
+* 正式環境下要關閉錯誤訊息。
+* 但是內建的 `error_log()` 函數沒那麼好用，推薦使用 [Monolog](https://github.com/Seldaek/monolog) 套件 (Laravel 使用)。使用 compser 來安裝也很簡單：
+
+```php
+{"require": {"monolog/monolog": "~1.11"}}
+```
+
+使用 Monolog 來寫日誌
+
+```php<?php// Use Composer autoloaderrequire 'path/to/vendor/autoload.php';// Import Monolog namespacesuse Monolog\Logger;use Monolog\Handler\StreamHandler;// Setup Monolog logger$log = new Logger('my-app-name');$log->pushHandler(new StreamHandler('path/to/your.log', Logger::WARNING));
+```
+
+可以給日誌定義不同層級，也能設定當緊急、嚴重產生時寄信通知管理員，寄信推薦使用 [SwiftMailer](https://github.com/swiftmailer/swiftmailer) 套件：
+
+
+```php<?php// Use Composer autoloaderrequire 'vendor/autoload.php';// Import Monolog namespacesuse Monolog\Logger;use Monolog\Handler\StreamHandler;use Monolog\Handler\SwiftMailerHandler;date_default_timezone_set('America/New_York');// Setup Monolog and basic handler$log = new Logger('my-app-name');$log->pushHandler(new StreamHandler('logs/production.log', Logger::WARNING));// Add SwiftMailer handler for critical errors$transport = \Swift_SmtpTransport::newInstance('smtp.example.com', 587)->setUsername('USERNAME')->setPassword('PASSWORD');$mailer = \Swift_Mailer::newInstance($transport);$message = \Swift_Message::newInstance()->setSubject('Website error!')->setFrom(array('daemon@example.com' => 'John Doe'))->setTo(array('admin@example.com'));$log->pushHandler(new SwiftMailerHandler($mailer, $message, Logger::CRITICAL));
+// Use logger$log->critical('The server is on fire!');
+```
+
+-
+Chapter 5 The end.
