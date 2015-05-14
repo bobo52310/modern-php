@@ -568,6 +568,15 @@ foreach ($period as $nextDateTime) {
 
 >(2015/5/14 @Laradiner)
 
+
+小補充
+> 實戰 SQL Injection 攻擊
+https://www.evernote.com/l/ALp8i881KpZFhaPpgkubtpgJQtgJkvteujY
+
+>Table 編碼問題(改用 charset utf8mb4)
+https://www.evernote.com/l/ALpJM1a9TzpJ6JifsL0Vg-L0dSEQp1q0sEc
+
+
 # Databases 
 * PHP 支援多種 DB 連線與連線的介面
 * MySQL：mysqli extension，讓 PHP 支援 mysqli_*() 方法
