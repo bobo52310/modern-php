@@ -695,22 +695,29 @@ InnoDB 提供的 transaction
 ### Character Encoding
 * 目前主流編碼使用 UTF-8。
 * 使用 UTF-8 編碼就對了，所有現代的瀏覽器都認識此編碼。
-* 字元編碼：一種依照某種格式打包 Unicode 資料的方法。並儲存在記憶體或在 server 與 client 之間傳送。
 
 >小複習：UTF-8是一種可變長度Unicode編碼。使用一至四個bytes作為文字的編碼：一個中文字 3bytes 英文字1bytes
->(Unicode不論中英文都是2bytes，UTF-8算是由此改良而來)
+>(Unicode不論中英文都是2bytes，UTF-8是Unicode實現方式之一)
 
-### 認識 Unicode 與 UTF-8
-* [the best explanation of Unicode and UTF-8that I’ve seen](https://www.youtube.com/watch?v=MijmeoH9LT4) by Tom Scott
+Unicode 現今仍在修訂中：
+
+* Unicode 6.0：2010年10月
+* Unicode 7.0：2014年6月15日
+* Unicode 8.0：2015年6月（預計）
+
+> 認識 Unicode 與 UTF-8
+>
+>* [the best explanation of Unicode and UTF-8that I’ve seen](https://www.youtube.com/watch?v=MijmeoH9LT4) by Tom Scott
 * [writes a nice explanation of characterencodings on his website](http://www.joelonsoftware.com/articles/Unicode.html) by Joel Spolsky
 
 ### 處理 Multibyte String 的準則
 1. 始終清楚知道資料的編碼。2. 使用 UTF-8 編碼來儲存資料。
 3. 輸出資料也是用 UTF-8 編碼。
 
-使用 `mb_detect_encoding()` 來偵測編碼
+使用 `mb_detect_encoding()`、`mb_convert_encoding()` 來偵測、轉換編碼。
 
-使用 `mb_convert_encoding()` 來轉換編碼
+
+使用 `mb_detect_order()` 取得環境的編碼順序。
 
 ### Output UTF-8 Data
 * 設定 HTML 文件編碼：
@@ -718,3 +725,5 @@ InnoDB 提供的 transaction
 * 設定 PHP 預設輸出 UTF-8 編碼的資料：
 	* 在 `php.ini` 設定 `default_charset = "UTF-8";`
 	* 將影響 `htmlentities()`,`html_entity_decode()`, `htmlspecialchars()` 和 `mbstring` 等函數預設編碼。
+
+-
