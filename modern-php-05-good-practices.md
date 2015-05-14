@@ -936,8 +936,7 @@ Errors, however, are older than exceptions.
 
 我們應該要依賴 exceptions 而避免 errors。
 
-Exceptions 是 PHP 錯誤處理機制魚物件導向下的產物。  are an object-oriented evolution of PHP’s error handling system.
-丟、接異常更有彈性，也是防禦性機制。
+Exceptions 是 PHP 錯誤處理機制於物件導向下的產物。
 
 * 避免使用 `@` 來抑制錯誤產生。
 * 使用第三方套件時，請使用 `try {} catch {}` 區塊包住，以捕捉不可預期的異常。
