@@ -727,3 +727,189 @@ Unicode 現今仍在修訂中：
 	* 將影響 `htmlentities()`,`html_entity_decode()`, `htmlspecialchars()` 和 `mbstring` 等函數預設編碼。
 
 -
+# Streams
+* PHP4.3 就有的功能，十分好用卻鮮為人知！
+* 相關文件並不多，就算有也是...
+
+來看看官方是怎麼**很拗口**的介紹這個功能：
+> Streams were introduced with PHP 4.3.0 as a way of generalizing file, network, datacompression, and other operations which share a common set of functions and uses.In its simplest definition, a stream is a resource object which exhibits streamablebehavior. That is, it can be read from or written to in a linear fashion, and may be ableto fseek() to an arbitrary location within the stream.
+ -- by PHP Manual
+
+一句話解釋：Stream is a transfer of data between an origin and destination.
+
+Stream Resource(origin and destination) 類型：
+
+* file
+* a command-line process
+* a network connection
+* a ZIP 
+* TAR archive
+* temporary memory
+* standard input or output
+* 或是其他定義在 [PHP’s stream wrappers](http://php.net/manual/en/wrappers.php)
+
+Stream 提供多種 PHP’s IO 函數的底層實作：
+
+* 像是 `file_get_contents()`, `fopen()`, `fgets()`, 以及 `fwrite()`。
+* 這些 Stream 函數幫助我們可以使用單一介面來操作不同的 Stream resource。
+* 若你曾經使用 `fopen()` 讀過檔案，那麼其實你也曾經使用過 Stream。
+
+>如果將資料比喻為水，Streams 像是水管，乘載這些水從一端移動到另一端，水在水管穿梭時我們可以過濾這些水，我們可以transform the water，也可以增加或減少水量。
+
+參考資料：
+ 
+* [PHP Master | ﻿Understanding Streams in PHP](http://www.sitepoint.com/%EF%BB%BFunderstanding-streams-in-php/)
+
+### Stream Wrappers
+不同類型的 stream 資料需要專屬的 protocols 來讀寫資料。
+這些 protocols 稱作 Stream Wrappers。
+例如，我們可以讀寫資料到檔案系統，我們可以透過 HTTP,HTTPS, or SSH (secure shell). 和遠端主機溝通。
+
+這些通訊方法都藉由相同的處理流程：
+
+1. Open communication.2. Read data.3. Write data.4. Close communication.
+
+雖然流程相同，但畢竟讀、寫檔案和收、發HTTP訊息在實作上本質還是不同的，而 Stream Wrappers 就是幫我們在這些統一接口背後封裝這些差異。
+
+每個 Stream 包含了 scheme 和 target，格式如下：
+`<scheme>://<target>`
+
+範例：使用 HTTP stream wrapper 連結 Flickr API```php<?php$json = file_get_contents('http://api.flickr.com/services/feeds/photos_public.gne?format=json');
+```
+
+傳入 `file_get_contents()` 的字串稱為 `stream identifier`
+而這裏的 scheme 是 http，驅使 PHP 去呼叫 HTTP stream wrapper，而 target 剛好是一段我們熟悉的 URL 格式，因為 HTTP 這個 stream wrapper 接受此格式。
+
+這個段落很重要。許多人並不知道 URL 就是一個 PHP stream wrapper identifier。
+
+>可用 `stream_get_wrappers()` 函數查詢本機所提供的 wrappers。
+
+### The file:// stream wrapper
+我們使用 `file_get_contents()`, `fopen()`, `fwrite()`, and `fclose()` 函數來讀寫檔案。
+
+由於預設的 PHP stream wrapper 就是 `file://`，以至於我們常常忽略他的存在。
+
+舉例：`file://` stream wrapper```php<?php$handle = fopen('file:///etc/hosts', 'rb');while (feof($handle) !== true) {echo fgets($handle);
+}fclose($handle);
+
+// 路徑通常會省略成 /etc/hosts
+```
+
+
+### The php:// stream wrapper
+command line 環境。
+
+[官網介紹 php://](http://php.net/manual/en/wrappers.php.php)
+
+官方建議使用定義 `STDIN`、`STDOUT`、`STDERR ` 常數，取代手動透過這些 stream wrapper 來操作 stream。
+
+例如：
+```
+define('STDIN',fopen("php://stdin","r"));
+```
+
+例如：[psysh 輸入介面就有用到](https://github.com/bobthecow/psysh/blob/e50a63b4e4971041fda993b0dd6977fc60bc39d4/src/Psy/Readline/Transient.php#L137)
+
+* php://stdin (標準輸入)
+	* 使用標準輸入介面取得輸入值。
+	* read-only* php://stdout (標準輸出)
+	* 輸出資料到目前的輸出緩衝區。
+	* write-only* php://memory
+	* 讀寫資料到記憶體。
+	* 因為有效記憶體空間是有限的，安全起見請使用 php://temp。* php://temp	* 讀寫資料到暫存檔。
+
+補充：
+
+* [S3 wrapper](http://docs.aws.amazon.com/aws-sdk-php/latest/class-Aws.S3.StreamWrapper.html)
+* [Dropbox wrapper](http://www.dropbox-php.com/)
+* Git Wrapper [teqneers/PHP-Stream-Wrapper-for-Git](https://github.com/teqneers/PHP-Stream-Wrapper-for-Git)
+
+### Custom stream wrappers
+PHP 允許您客製化 stream wrapper。
+請參見：
+
+* [http://php.net/manual/class.streamwrapper.php](http://php.net/manual/class.streamwrapper.php)* [http://php.net/manual/stream.streamwrapper.example-1.php](http://php.net/manual/stream.streamwrapper.example-1.php)
+
+### Stream Context
+* 有些 PHP streams 接受選填傳入一組參數來客製化 stream 的行為。
+* 使用 `stream_context_create()` 函數來建立 stream context
+* 不同的 stream wrappers 接受不同的 context 參數。
+* 大部份的 filesystem 和 stream 函數接受傳入 context 物件。
+* 
+舉例： 使用 `file_get_contents` 搭配 `Stream context` 傳送 HTTP POST 請求。```php
+<?php$requestBody = '{"username":"josh"}';$context = stream_context_create(array(	'http' => array(	'method' => 'POST',	'header' => "Content-Type: application/json;charset=utf-8;\r\n" .	"Content-Length: " . mb_strlen($requestBody),	'content' => $requestBody
+)));$response = file_get_contents('https://my-api.com/users', false, $context);
+```
+
+Stream context 是一組關聯式陣列，並以 stream wrapper 名稱作為 key 值。value 則是對應到各個 stream wrapper。
+
+
+### Stream Filters目前為止我們討論了基本的 PHP streams 讀寫方法。
+然而，真正厲害的是在 filtering, transforming, adding, or removing stream data in transit. 
+
+PHP 內建的 Stream Filters：
+
+* `string.rot13`, `string.toupper`, `string.tolower`, and`string.strip_tags`.
+* 並且可以自訂 filter。
+
+舉例：使用 `stream_filter_append()` 函數為 Stream 加上 string.toupper 這個 filter ```php
+<?php$handle = fopen('data.txt', 'rb');stream_filter_append($handle, 'string.toupper');while(feof($handle) !== true) {echo fgets($handle); // <-- Outputs all uppercase characters}fclose($handle);
+```
+
+也可以使用 `php://filter`
+
+舉例：使用 `php://filter` 函數為 Stream 加上 string.toupper 這個 filter
+```php<?php$handle = fopen('php://filter/read=string.toupper/resource=data.txt', 'rb');
+while(feof($handle) !== true) {echo fgets($handle); // <-- Outputs all uppercase characters}fclose($handle);
+```
+
+部分PHP filesystem 函數(e.g `file()`、`fpassthru()`)不接受使用 `stream_filter_append()` 函數來附加 filter。只能使用 `php://filter` 。
+
+實際案例見識 stream filters 的威力；Stream 處理 log 的情境需求：
+
+* 網站每天的 nginx access logs 檔案，以 bzip2 壓縮丟到 rsync.net 備份
+* 每天一個檔案，檔名格式為 YYYY-MM-DD.log.bz2
+* 需要知道特定 domain 過去30天的 access data
+
+
+傳統做法：
+
+* FTP 登入 rsync.net 將檔案拉回。
+* 計算時間區間的日期，以決定檔案名稱
+* 使用 `shell_exec()` 或 `bzdecompress()` 解壓縮每個檔案
+* 逐行讀入檢視是否有符合的特定 domain
+* 將此特定 domain 的 access data 輸出
+
+搭配 stream filters 的優雅做法，20行內搞定：
+```php01 <?php02 $dateStart = new \DateTime();03 $dateInterval = \DateInterval::createFromDateString('-1 day');04 $datePeriod = new \DatePeriod($dateStart, $dateInterval, 30);05 foreach ($datePeriod as $date) {06 $file = 'sftp://USER:PASS@rsync.net/' . $date->format('Y-m-d') . '.log.bz2';07 if (file_exists($file)) {08 $handle = fopen($file, 'rb');09 stream_filter_append($handle, 'bzip2.decompress');10 while (feof($handle) !== true) {11 $line = fgets($handle);12 if (strpos($line, 'www.example.com') !== false) {13 fwrite(STDOUT, $line);14 }15 }16 fclose($handle);17 }18 }
+```
+
+* 2–4 行：建立 DatePeriod 物件，取得過去 30 天的日期。* 6 行：使用 DateTime 物件設定日期並建立 log 檔名。* Lines 8–9 使用 SFTP stream wrapper 傳送來自於 rsync.net 的 log 檔。並搭配 bzip2.decompress stream filter 來解壓縮。* 10–15 行：使用 PHP 標準的 filesystem 函數來迭代處理這些解壓縮後的 log 檔。* 12–14 行：逐行檢查是否有特定 domain，找到時會使用 STDOUT 來寫檔。
+
+### Custom Stream Filters可以自訂 Stream Filters且通常使用 filter 時都是客製化的需求，
+是一組繼承自 `php_user_filter` 的 PHP classes 。
+
+必須實作 `filter()`、`onCreate()`、`onClose()` 等方法。
+使用 `stream_filter_register()` 函數來註冊。
+
+實作一個可以過濾 Dirty words 的 stream filter：
+
+```php
+class DirtyWordsFilter extends php_user_filter{/*** @param resource $in Incoming bucket brigade* @param resource $out Outgoing bucket brigade* @param int $consumed Number of bytes consumed* @param bool $closing Last bucket brigade in stream?*/public function filter($in, $out, &$consumed, $closing){$words = array('grime', 'dirt', 'grease');$wordData = array();foreach ($words as $word) {$replacement = array_fill(0, mb_strlen($word), '*');$wordData[$word] = implode('', $replacement);}$bad = array_keys($wordData);$good = array_values($wordData);// Iterate each bucket from incoming bucket brigadewhile ($bucket = stream_bucket_make_writeable($in)) {// Censor dirty words in bucket data$bucket->data = str_replace($bad, $good, $bucket->data);// Increment total data consumed$consumed += $bucket->datalen;// Send bucket to downstream brigadestream_bucket_append($out, $bucket);}return PSFS_PASS_ON;}}
+```
+
+註冊自訂的 DirtyWordsFilter stream filter
+```php<?phpstream_filter_register('dirty_words_filter', 'DirtyWordsFilter');
+```
+
+使用自訂的 `dirty_words_filter` ：
+
+```php
+Example 5-37. Use DirtyWordsFilter stream filter<?php$handle = fopen('data.txt', 'rb');stream_filter_append($handle, 'dirty_words_filter');while (feof($handle) !== true) {echo fgets($handle); // <-- Outputs censored text}fclose($handle);
+```
+
+瞭解更多：
+
+* [Streams documentation](http://php.net/manual/en/book.stream.php)
+
+
